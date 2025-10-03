@@ -1,3 +1,4 @@
+import { ZodError } from 'zod';
 import Fastify from 'fastify';
 import fp from 'fastify-plugin';
 import cors from '@fastify/cors';
@@ -7,7 +8,9 @@ import { env } from '../../../config/env';
 import URL from 'node:url';
 
 export function buildApp() {
-  const app = Fastify({ logger: true });
+  const app = Fastify({ 
+    // logger: true
+  });
 
   app.register(fp(async (instance) => {
     await instance.register(cors, { origin: true, credentials: true });
@@ -18,6 +21,11 @@ export function buildApp() {
 
   app.setErrorHandler((error, request, reply) => {
     request.log.error(error);
+
+    if (error instanceof ZodError) {
+      return reply.code(400).send({ message: 'Bad Request', error });
+    }
+    
     return reply.code(500).send({ message: 'Internal Server Error' });
   });
 
