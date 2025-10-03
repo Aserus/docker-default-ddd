@@ -114,7 +114,7 @@ describe('Auth E2E', () => {
     expect(introspection.json()).toEqual({ active: true });
   });
 
-  it('should introspection token wrong access token', async () => {
+  it('should introspection token | wrong access token', async () => {
     const wrongToken = Math.random().toString(36).slice(2, 8)
     const introspection = await app.inject({
       method: 'GET',
@@ -127,7 +127,7 @@ describe('Auth E2E', () => {
     expect(introspection.statusCode).toBe(200);
     expect(introspection.json()).toEqual({ active: false });
   });
-  it('should introspection token empty access token', async () => {
+  it('should introspection token | empty access token', async () => {
     const introspection = await app.inject({
       method: 'GET',
       url: '/api/v1/auth/token-introspection',
@@ -144,6 +144,34 @@ describe('Auth E2E', () => {
       payload: { refreshToken },
     });
     expect(logout.statusCode).toBe(204);
+  });
+
+  it('should logout | empty refresh token', async () => {
+    const logout = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/logout',
+      payload: {  },
+    });
+    expect(logout.statusCode).toBe(400);
+  });
+
+
+  it('should logout | empty refresh token', async () => {
+    const logout = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/logout',
+      payload: {  },
+    });
+    expect(logout.statusCode).toBe(400);
+  });
+
+  it('should logout | wrong refresh token', async () => {
+    const logout = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/logout',
+      payload: { refreshToken: "wrong_token" },
+    });
+    expect(logout.statusCode).toBe(401);
   });
 });
 
