@@ -65,10 +65,15 @@ export async function authRoutes(app: FastifyInstance) {
   });
 
   app.post('/logout', async (request, reply) => {
-    const schema = z.object({ refreshToken: z.string().optional(), userId: z.string().optional() });
-    const { refreshToken, userId } = schema.parse(request.body ?? {});
-    const useCase = new LogoutUserUseCase(refreshRepo);
-    await useCase.execute({ refreshToken, userId });
-    return reply.code(204).send();
+    const schema = z.object({ refreshToken: z.string() });
+    const { refreshToken } = schema.parse(request.body ?? {});
+    try {
+      const useCase = new LogoutUserUseCase(refreshRepo);
+      await useCase.execute({ refreshToken });
+      return reply.code(204).send();
+    } catch (err) {
+      if (err instanceof AppError) return reply.code(err.statusCode).send({ message: err.message });
+      throw err;
+    }
   });
 }
