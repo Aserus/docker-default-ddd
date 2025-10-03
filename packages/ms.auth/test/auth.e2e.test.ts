@@ -47,6 +47,30 @@ describe('Auth E2E', () => {
     expect(refreshToken).toBeTruthy();
   });
 
+  it('should login | no exists user', async () => {
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: {
+        username: `no_exists_user_${Math.random().toString(36).slice(2, 8)}`, 
+        password: 'wrong_password'
+      },
+    });
+    expect(login.statusCode).toBe(401);
+  });
+
+  it('should login | error password', async () => {
+    const login = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/login',
+      payload: {
+        username: TEST_USER.username,
+        password: 'wrong_password'
+      },
+    });
+    expect(login.statusCode).toBe(401);
+  });
+
   it('should refresh', async () => {
     const refresh = await app.inject({
       method: 'POST',
@@ -56,6 +80,25 @@ describe('Auth E2E', () => {
     expect(refresh.statusCode).toBe(200);
     const refreshed = refresh.json() as { accessToken: string; };
     expect(refreshed.accessToken).toBeTruthy();
+  });
+
+  it('should refresh | empty refresh token', async () => {
+    const refresh = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      payload: { },
+    });
+    expect(refresh.statusCode).toBe(400);
+  });
+
+  it('should refresh | wrong refresh token', async () => {
+    const wrongToken = Math.random().toString(36).slice(2, 8)
+    const refresh = await app.inject({
+      method: 'POST',
+      url: '/api/v1/auth/refresh',
+      payload: { refreshToken: wrongToken },
+    });
+    expect(refresh.statusCode).toBe(401);
   });
 
   it('should introspection token', async () => {
@@ -69,6 +112,29 @@ describe('Auth E2E', () => {
 
     expect(introspection.statusCode).toBe(200);
     expect(introspection.json()).toEqual({ active: true });
+  });
+
+  it('should introspection token wrong access token', async () => {
+    const wrongToken = Math.random().toString(36).slice(2, 8)
+    const introspection = await app.inject({
+      method: 'GET',
+      url: '/api/v1/auth/token-introspection',
+      headers: {
+        authorization: `Bearer ${wrongToken}`,
+      },
+    });
+
+    expect(introspection.statusCode).toBe(200);
+    expect(introspection.json()).toEqual({ active: false });
+  });
+  it('should introspection token empty access token', async () => {
+    const introspection = await app.inject({
+      method: 'GET',
+      url: '/api/v1/auth/token-introspection',
+    });
+
+    expect(introspection.statusCode).toBe(200);
+    expect(introspection.json()).toEqual({ active: false });
   });
 
   it('should logout', async () => {
